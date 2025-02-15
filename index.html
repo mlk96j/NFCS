@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gesicherte NFC-Webseite</title>
+    <script>
+        document.addEventListener("DOMContentLoaded", async function () {
+            // NFC-Tag lesen (nur auf kompatiblen Geräten)
+            if ("NDEFReader" in window.navigator) {
+                try {
+                    const nfc = new NDEFReader();
+                    await nfc.scan();
+                    nfc.onreading = event => {
+                        const decoder = new TextDecoder();
+                        for (const record of event.message.records) {
+                            const tagUID = decoder.decode(record.data);
+                            verifyUID(tagUID);
+                        }
+                    };
+                } catch (error) {
+                    document.body.innerHTML = "<h2>Fehler beim Zugriff auf NFC.</h2>";
+                }
+            } else {
+                document.body.innerHTML = "<h2>Ihr Gerät unterstützt kein NFC.</h2>";
+            }
+        });
+
+        function verifyUID(uid) {
+            const authorizedTags = ["04AABBCCDDFF", "0488EEDDCC99"]; // Liste erlaubter UIDs
+
+            if (authorizedTags.includes(uid.trim())) {
+                document.body.innerHTML = "<h1>Willkommen! NFC-Tag verifiziert.</h1>";
+            } else {
+                document.body.innerHTML = "<h2>Zugriff verweigert: Unbekannter NFC-Tag.</h2>";
+            }
+        }
+    </script>
+</head>
+<body>
+    <h1>Bitte scannen Sie Ihr NFC-Tag...</h1>
+</body>
+</html>
