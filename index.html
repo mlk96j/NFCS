@@ -3,41 +3,28 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gesicherte NFC-Webseite</title>
-    <script>
-        document.addEventListener("DOMContentLoaded", async function () {
-            // NFC-Tag lesen (nur auf kompatiblen Geräten)
-            if ("NDEFReader" in window.navigator) {
-                try {
-                    const nfc = new NDEFReader();
-                    await nfc.scan();
-                    nfc.onreading = event => {
-                        const decoder = new TextDecoder();
-                        for (const record of event.message.records) {
-                            const tagUID = decoder.decode(record.data);
-                            verifyUID(tagUID);
-                        }
-                    };
-                } catch (error) {
-                    document.body.innerHTML = "<h2>Fehler beim Zugriff auf NFC.</h2>";
-                }
-            } else {
-                document.body.innerHTML = "<h2>Ihr Gerät unterstützt kein NFC.</h2>";
-            }
-        });
-
-        function verifyUID(uid) {
-            const authorizedTags = ["04:5C:B3:70:BD:2A:81", "0488EEDDCC99"]; // Liste erlaubter UIDs
-
-            if (authorizedTags.includes(uid.trim())) {
-                document.body.innerHTML = "<h1>Willkommen! NFC-Tag verifiziert.</h1>";
-            } else {
-                document.body.innerHTML = "<h2>Zugriff verweigert: Unbekannter NFC-Tag.</h2>";
-            }
-        }
-    </script>
+    <title>NFC Zugang</title>
 </head>
 <body>
-    <h1>Bitte scannen Sie Ihr NFC-Tag...</h1>
+    <h1 id="message">Überprüfung läuft...</h1>
+
+    <script>
+        // Liste der verschlüsselten Links (Hash-Werte)
+        const allowedTokens = [
+            "b59c67bf196a4758191e42f76670ceba", // Beispiel-Hash für verifizierte NFCs
+            "098f6bcd4621d373cade4e832627b4f6"
+        ];
+
+        // Die URL auslesen
+        const params = new URLSearchParams(window.location.search);
+        const token = params.get("auth");
+
+        // Überprüfung
+        if (allowedTokens.includes(token)) {
+            document.getElementById("message").innerText = "✅ Guten Tag! NFC ist verifiziert.";
+        } else {
+            document.getElementById("message").innerText = "❌ NFC nicht verifiziert!";
+        }
+    </script>
 </body>
 </html>
