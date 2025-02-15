@@ -3,28 +3,60 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NFC Zugang</title>
-</head>
-<body>
-    <h1 id="message">Überprüfung läuft...</h1>
+    <title>NFC-Authentifizierung</title>
+    <script type="module">
+        // Firebase SDK laden
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js";
+        import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-database.js";
 
-    <script>
-        // Liste der verschlüsselten Links (Hash-Werte)
-        const allowedTokens = [
-            "b59c67bf196a4758191e42f76670ceba", // Beispiel-Hash für verifizierte NFCs
-            "098f6bcd4621d373cade4e832627b4f6"
-        ];
+        // 🔹 Firebase-Konfiguration (DIESE DATEN MUSST DU ERSETZEN!)
+        const firebaseConfig = {
+            apiKey: "DEINE-API-KEY",
+            authDomain: "DEIN-FIREBASE-PROJEKT.firebaseapp.com",
+            databaseURL: "https://DEIN-FIREBASE-PROJEKT.firebaseio.com",
+            projectId: "DEIN-FIREBASE-PROJEKT",
+            storageBucket: "DEIN-FIREBASE-PROJEKT.appspot.com",
+            messagingSenderId: "DEINE-MESSAGING-ID",
+            appId: "DEINE-APP-ID"
+        };
 
-        // Die URL auslesen
-        const params = new URLSearchParams(window.location.search);
-        const token = params.get("auth");
+        // Firebase initialisieren
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
 
-        // Überprüfung
-        if (allowedTokens.includes(token)) {
-            document.getElementById("message").innerText = "✅ Guten Tag! NFC ist verifiziert.";
-        } else {
-            document.getElementById("message").innerText = "❌ NFC nicht verifiziert!";
+        async function checkNFC(uid) {
+            const dbRef = ref(db, "nfcTags/" + uid);
+            const snapshot = await get(dbRef);
+
+            if (snapshot.exists()) {
+                document.getElementById("message").innerText = "✅ Zugang erlaubt!";
+            } else {
+                document.getElementById("message").innerText = "❌ NFC nicht verifiziert!";
+            }
+        }
+
+        async function startNFC() {
+            if ("NDEFReader" in window) {
+                try {
+                    const ndef = new NDEFReader();
+                    await ndef.scan();
+                    ndef.onreading = event => {
+                        let scannedUID = event.serialNumber;
+                        checkNFC(scannedUID);
+                    };
+                } catch (error) {
+                    document.getElementById("message").innerText = "⚠️ Fehler beim Lesen der NFC-Daten!";
+                }
+            } else {
+                document.getElementById("message").innerText = "❌ Dein Gerät unterstützt kein NFC!";
+            }
         }
     </script>
+</head>
+<body>
+    <h1>NFC-Authentifizierung</h1>
+    <p id="message">Bitte halte dein NFC-Tag an das Gerät.</p>
+
+    <button onclick="startNFC()">🔄 NFC-Scan starten</button>
 </body>
 </html>
